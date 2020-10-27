@@ -1,0 +1,186 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DocumentationFile>bin\Debug\netstandard2.0\Utility.xml</DocumentationFile>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DocumentationFile>bin\Release\netstandard2.0\Utility.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Number.il" />
+    <Compile Include="Objects.il" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!--<Target Name="OverrideCscPath" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <CscToolPath>$(SolutionDir)compilers\42.42.42.42424</CscToolPath>
+    </PropertyGroup>
+  </Target>-->
+  <!--<UsingTask TaskName="Microsoft.CodeAnalysis.BuildTasks.Csc" AssemblyFile="$(SolutionDir)compilers\42.42.42.42424\Microsoft.Build.Tasks.CodeAnalysis.dll" />-->
+  <!--<UsingTask TaskName="Microsoft.CodeAnalysis.BuildTasks.Csc"
+               AssemblyFile="C:\Users\iseep\AppData\Local\Microsoft\VisualStudio\15.0_46a18e15RoslynDev\Extensions\Microsoft\Roslyn Compilers\42.42.42.42424\Microsoft.Build.Tasks.CodeAnalysis.dll" />-->
+
+  <Target Name="HideILFromCompile" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <IL Include="@(Compile)" Condition="'%(Extension)'=='.il'" />
+      <Compile Remove="@(Compile)" Condition="'%(Extension)'=='.il'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="InitializeIL" Condition="@(IL) != ''" AfterTargets="AfterCompile">
+    <PropertyGroup>
+      <ILFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).il', ' ')</ILFile>
+      <ILResourceFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).res', ' ')</ILResourceFile>
+    </PropertyGroup>
+  </Target>
+  <Target Name="CoreDecompile" Inputs="@(IntermediateAssembly)" Outputs="$(ILFile)" Condition="@(IL) != '' AND Exists(@(IntermediateAssembly))" AfterTargets="InitializeIL">
+    <GetFrameworkSdkPath>
+      <Output TaskParameter="Path" PropertyName="FrameworkSdkPath" />
+    </GetFrameworkSdkPath>
+    <PropertyGroup>
+      <ILDasmPath>$(FrameworkSdkPath)bin\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.0 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.0 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.5.1 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.5.1 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.6 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.6 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.6.1 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.6.1 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.6.2 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.6.2 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.7 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.7 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.7.1 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.7.1 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.7.2 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.7.2 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(FrameworkSdkPath)bin\NETFX 4.8 Tools\ildasm.exe')">
+      <ILDasmPath>$(FrameworkSdkPath)bin\NETFX 4.8 Tools\ildasm.exe</ILDasmPath>
+    </PropertyGroup>
+    <PropertyGroup Condition="ILDasmPath != ''">
+      <ILDasm>"$(ILDasmPath)" /nobar /linenum /utf8 /output:"$(ILFile)" @(IntermediateAssembly->'"%(FullPath)"', ' ')</ILDasm>
+    </PropertyGroup>
+    <Exec Command="$(ILDasm)" />
+    <ItemGroup>
+      <FileWrites Include="$(ILFile)" />
+      <FileWrites Include="$(ILResourceFile)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ILSource>$([System.IO.File]::ReadAllText($(ILFile)))</ILSource>
+
+      <Pattern>\.method [^{}]+ cil managed forwardref[^}]+} // end of method (?&lt;method&gt;[^ \r\t\n]+)</Pattern>
+      <Replacement>// method ${method} forwardref removed for IL import</Replacement>
+      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>
+
+      <Pattern>\.method [^{}]+ cil managed[^\a]+"extern was not given a DllImport attribute"[^}]+} // end of method (?&lt;method&gt;[^ \r\t\n]+)</Pattern>
+      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>
+
+      <!--<Pattern>\.assembly extern netstandard</Pattern>
+      <Replacement>.assembly extern netstandard as mscorlib</Replacement>
+      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>-->
+    </PropertyGroup>
+    <WriteLinesToFile File="$(ILFile)" Lines="$(ILSource)" Overwrite="true" />
+    <PropertyGroup>
+      <ILSource />
+    </PropertyGroup>
+    <Delete Files="@(IntermediateAssembly)" />
+  </Target>
+  <!--
+    Targets that has inputs are automatically skipped if their inputs are empty,
+    therefore when there are no .il files, @(IL) is evaluated to nothing and thus,
+    the step is skipped.
+    -->
+  <Target Name="CoreCompileIL" Inputs="@(IL)" Outputs="@(IntermediateAssembly)" AfterTargets="CoreDecompile">
+    <GetFrameworkPath>
+      <Output TaskParameter="Path" PropertyName="FrameworkPath" />
+    </GetFrameworkPath>
+    <PropertyGroup>
+      <ILAsm>"$(FrameworkPath)\ilasm.exe" /nologo /output:@(IntermediateAssembly->'"%(FullPath)"', ' ')</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(FileAlignment)' != ''">
+      <ILAsm>$(ILAsm) /alignment=$(FileAlignment)</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(BaseAddress)' != ''">
+      <ILAsm>$(ILAsm) /base=$(BaseAddress)</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(OutputType)' == 'Library'">
+      <ILAsm>$(ILAsm) /dll</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(DebugType)' == 'pdbonly'">
+      <ILAsm>$(ILAsm) /pdb</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(DebugType)' == 'full'">
+      <ILAsm>$(ILAsm) /debug</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Optimize)' == 'true'">
+      <ILAsm>$(ILAsm) /optimize</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)' == 'x64'">
+      <ILAsm>$(ILAsm) /pe64 /x64</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)' == 'Itanium'">
+      <ILAsm>$(ILAsm) /pe64 /itanium</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(AssemblyOriginatorKeyFile)' != ''">
+      <ILAsm>$(ILAsm) /key:"$(AssemblyOriginatorKeyFile)"</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(ILResourceFile)')">
+      <ILAsm>$(ILAsm) /resource:"$(ILResourceFile)"</ILAsm>
+    </PropertyGroup>
+    <PropertyGroup Condition="Exists('$(ILFile)')">
+      <ILAsm>$(ILAsm) "$(ILFile)"</ILAsm>
+    </PropertyGroup>
+    <Exec Command="$(ILAsm) @(IL->'&quot;%(FullPath)&quot;', ' ')" />
+    <ItemGroup>
+      <FileWrites Include="@(IntermediateAssembly->'%(RootDir)%(Directory)DesignTimeResolveAssemblyReferencesInput.cache', ' ')" />
+    </ItemGroup>
+    <Touch Files="$(ILFile)" />
+  </Target>
+
+  <!--<PropertyGroup>
+        <BuildDependsOn>
+            MyCustomTarget1;
+            $(BuildDependsOn);
+            MyCustomTarget2;
+        </BuildDependsOn>
+    </PropertyGroup>-->
+</Project>
