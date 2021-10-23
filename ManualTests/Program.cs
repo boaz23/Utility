@@ -7,9 +7,7 @@ namespace ManualTests
     {
         public static void Main(string[] args)
         {
-            DateTime a = DateTime.Now;
-            DateTime b = DateTime.Now - TimeSpan.FromSeconds(100);
-            var t = a - b;
+            Console.WriteLine($"{Utility.Numbers.BitCount(long.MinValue)}");
         }
 
         private static void Pause()

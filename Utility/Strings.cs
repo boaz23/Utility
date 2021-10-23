@@ -52,7 +52,7 @@ namespace Utility
                 throw new ArgumentNullException(nameof(s));
             }
 
-            return s.Length > 0 && s[^1] == c;
+            return s.Length > 0 && s[s.Length - 1] == c;
         }
 
         public static bool EqualsIgnoreCase(this string s1, string s2)
