@@ -122,21 +122,20 @@ Slightly modified.
       <_IlasmSwitches Condition="'$(DebugType)' == 'PdbOnly'">$(_IlasmSwitches) -DEBUG=OPT</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(Optimize)' == 'True'">$(_IlasmSwitches) -OPTIMIZE</_IlasmSwitches>
 
-      <!-- Not working right now for some reason -->
-      <!--<_IlasmSwitches Condition="'$(Platform)' == 'x86'">$(_IlasmSwitches)</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(Platform)' == 'AnyCPU'">$(_IlasmSwitches)</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(Platform)' == 'Itanium'">$(_IlasmSwitches)  -PE64 -ITANIUM</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(Platform)' == 'x64'">$(_IlasmSwitches) -x64</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(Platform)' == 'ARM' or '$(Platform)' == 'ARM32'">$(_IlasmSwitches) -ARM</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(Platform)' == 'ARM64'">$(_IlasmSwitches) -ARM64</_IlasmSwitches>-->
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'x86'">$(_IlasmSwitches)</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'AnyCPU'">$(_IlasmSwitches)</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'Itanium'">$(_IlasmSwitches)  -PE64 -ITANIUM</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'x64'">$(_IlasmSwitches) -x64</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'ARM' or '$(Platform)' == 'ARM32'">$(_IlasmSwitches) -ARM</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'ARM64'">$(_IlasmSwitches) -ARM64</_IlasmSwitches>
       
       <!--<_IlasmSwitches Condition="'$(IlasmResourceFile)' != ''">$(_IlasmSwitches) -RESOURCES=$(IlasmResourceFile)</_IlasmSwitches>-->
 
       <ILAsm>$(_IlasmDir)ilasm $(_IlasmSwitches) $(_OutputTypeArgument) $(IlasmFlags) -OUTPUT=@(IntermediateAssembly->'"%(FullPath)"', ' ') @(IL->'"%(FullPath)"', ' ')</ILAsm>
     </PropertyGroup>
-    
+
     <!--<Message Text="ilasm flags: $(IlasmFlags)" Importance="high"/>
-    <Message Text="platform: $(Platform)" Importance="high"/>
+    <Message Text="platform target: $(PlatformTarget)" Importance="high"/>
     <Message Text="ilasm: $(ILAsm)" Importance="high"/>-->
       
     <PropertyGroup Condition=" Exists ( '$(ILFile)' ) ">
