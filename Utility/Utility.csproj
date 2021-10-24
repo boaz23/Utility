@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\il.targets" />
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -11,138 +12,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <None Remove="Number.il" />
     <None Remove="Objects.il" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <Compile Include="Number.il" />
     <Compile Include="Objects.il" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NETCore.ILAsm" Version="5.0.0" />
-    <PackageReference Include="Microsoft.NETCore.ILDAsm" Version="5.0.0" />
-  </ItemGroup>
-
-  <Target Name="HideILFromCompile" BeforeTargets="BeforeBuild">
-    <ItemGroup>
-      <IL Include="@(Compile)" Condition="'%(Extension)'=='.il'" />
-      <Compile Remove="@(Compile)" Condition="'%(Extension)'=='.il'" />
-    </ItemGroup>
-  </Target>
-
-  <Target Name="InitializeIL" Condition="@(IL) != ''" AfterTargets="AfterCompile">
-    <PropertyGroup>
-      <ILFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).il', ' ')</ILFile>
-      <ILResourceFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).res', ' ')</ILResourceFile>
-    </PropertyGroup>
-  </Target>
-
-  <!--<Target Name="TestFP" AfterTargets="AfterBuild">
-    <GetFrameworkSdkPath>
-      <Output TaskParameter="Path" PropertyName="FrameworkSdkPath" />
-    </GetFrameworkSdkPath>
-    <GetFrameworkPath>
-      <Output TaskParameter="Path" PropertyName="FrameworkPath" />
-    </GetFrameworkPath>
-
-    <Message Text="test FP: $(FrameworkPath);\ntest FSP: $(FrameworkSdkPath)" Importance="high"/>
-  </Target>-->
-  <Target Name="SetPaths" Condition="@(IL) != '' AND Exists(@(IntermediateAssembly))" AfterTargets="InitializeIL">
-    <!--<GetFrameworkSdkPath>
-      <Output TaskParameter="Path" PropertyName="FrameworkSdkPath" />
-    </GetFrameworkSdkPath>
-    <GetFrameworkPath>
-      <Output TaskParameter="Path" PropertyName="FrameworkPath" />
-    </GetFrameworkPath>-->
-    <!--<PropertyGroup>
-      <ILDasmPath>$(FrameworkSdkPath)bin\ildasm.exe</ILDasmPath>
-    </PropertyGroup>-->
-    <PropertyGroup>
-      <FrameworkPath>D:\Programming\runtime\artifacts\bin\coreclr\Windows_NT.x64.Release</FrameworkPath>
-    </PropertyGroup>
-    <PropertyGroup>
-      <ILDasmPath>"$(FrameworkPath)\ildasm.exe"</ILDasmPath>
-      <ILAsmPath>"$(FrameworkPath)\ilasm.exe"</ILAsmPath>
-    </PropertyGroup>
-  </Target>
-  
-  <Target Name="CoreDecompile" Inputs="@(IntermediateAssembly)" Outputs="$(ILFile)" Condition="@(IL) != '' AND Exists(@(IntermediateAssembly))" AfterTargets="SetPaths">
-    <PropertyGroup Condition="ILDasmPath != ''">
-      <ILDasmCmd>"$(ILDasmPath)" /linenum /utf8 /output:"$(ILFile)" @(IntermediateAssembly->'"%(FullPath)"', ' ')</ILDasmCmd>
-    </PropertyGroup>
-    <Exec Command="$(ILDasmCmd)" />
-    <ItemGroup>
-      <FileWrites Include="$(ILFile)" />
-      <FileWrites Include="$(ILResourceFile)" />
-    </ItemGroup>
-    <PropertyGroup>
-      <ILSource>$([System.IO.File]::ReadAllText($(ILFile)))</ILSource>
-
-      <Pattern>\.method [^{}]+ cil managed forwardref[^}]+} // end of method (?&lt;method&gt;[^ \r\t\n]+)</Pattern>
-      <Replacement>// method ${method} forwardref removed for IL import</Replacement>
-      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>
-
-      <Pattern>\.method [^{}]+ cil managed[^\a]+"extern was not given a DllImport attribute"[^}]+} // end of method (?&lt;method&gt;[^ \r\t\n]+)</Pattern>
-      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>
-    </PropertyGroup>
-    <WriteLinesToFile File="$(ILFile)" Lines="$(ILSource)" Overwrite="true" />
-    <PropertyGroup>
-      <ILSource />
-    </PropertyGroup>
-    <Delete Files="@(IntermediateAssembly)" />
-  </Target>
-  
-  <!--
-    Targets that has inputs are automatically skipped if their inputs are empty,
-    therefore when there are no .il files, @(IL) is evaluated to nothing and thus,
-    the step is skipped.
-    -->
-  
-  <Target Name="CoreCompileIL" Inputs="@(IL)" Outputs="@(IntermediateAssembly)" AfterTargets="CoreDecompile">
-    <PropertyGroup>
-      <ILAsmCmd>$(ILAsmPath) /nologo /output:@(IntermediateAssembly->'"%(FullPath)"', ' ')</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(FileAlignment)' != ''">
-      <ILAsmCmd>$(ILAsmCmd) /alignment=$(FileAlignment)</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(BaseAddress)' != ''">
-      <ILAsmCmd>$(ILAsmCmd) /base=$(BaseAddress)</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(OutputType)' == 'Library'">
-      <ILAsmCmd>$(ILAsmCmd) /dll</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(DebugType)' == 'pdbonly'">
-      <ILAsmCmd>$(ILAsmCmd) /pdb</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(DebugType)' == 'full'">
-      <ILAsmCmd>$(ILAsmCmd) /debug</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Optimize)' == 'true'">
-      <ILAsmCmd>$(ILAsmCmd) /optimize</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Platform)' == 'x64'">
-      <ILAsmCmd>$(ILAsmCmd) /pe64 /x64</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Platform)' == 'Itanium'">
-      <ILAsmCmd>$(ILAsmCmd) /pe64 /itanium</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(AssemblyOriginatorKeyFile)' != ''">
-      <ILAsmCmd>$(ILAsmCmd) /key:"$(AssemblyOriginatorKeyFile)"</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="Exists('$(ILResourceFile)')">
-      <ILAsmCmd>$(ILAsmCmd) /resource:"$(ILResourceFile)"</ILAsmCmd>
-    </PropertyGroup>
-    <PropertyGroup Condition="Exists('$(ILFile)')">
-      <ILAsmCmd>$(ILAsmCmd) "$(ILFile)"</ILAsmCmd>
-    </PropertyGroup>
-    <Exec Command="$(ILAsmCmd) @(IL->'&quot;%(FullPath)&quot;', ' ')" />
-    <ItemGroup>
-      <FileWrites Include="@(IntermediateAssembly->'%(RootDir)%(Directory)DesignTimeResolveAssemblyReferencesInput.cache', ' ')" />
-    </ItemGroup>
-    <Touch Files="$(ILFile)" />
-  </Target>
 </Project>

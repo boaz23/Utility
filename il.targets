@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+Source: https://programmerall.com/article/47812227454/
+Slightly modified.
+-->
+
+<Project>
+
+  <PropertyGroup>
+    <_OSPlatform Condition="$([MSBuild]::IsOSPlatform('windows'))">win</_OSPlatform>
+    <_OSPlatform Condition="$([MSBuild]::IsOSPlatform('linux'))">linux</_OSPlatform>
+    <_OSPlatform Condition="$([MSBuild]::IsOSPlatform('osx'))">osx</_OSPlatform>
+    <_OSPlatform Condition="$([MSBuild]::IsOSPlatform('freebsd'))">freebsd</_OSPlatform>
+    <_OSArchitecture>$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)</_OSArchitecture>
+
+    <MicrosoftNetCoreIlasmPackageRuntimeId Condition="'$(MicrosoftNetCoreIlasmPackageRuntimeId)' == ''">$(_OSPlatform)-$(_OSArchitecture.ToLower())</MicrosoftNetCoreIlasmPackageRuntimeId>
+    <MicrosoftNETCoreILAsmVersion Condition="'$(MicrosoftNETCoreILAsmVersion)' == ''">5.0.0</MicrosoftNETCoreILAsmVersion>
+    <MicrosoftNetCoreIlasmPackageName>runtime.$(MicrosoftNetCoreIlasmPackageRuntimeId).microsoft.netcore.ilasm</MicrosoftNetCoreIlasmPackageName>
+    <MicrosoftNetCoreIldasmPackageName>runtime.$(MicrosoftNetCoreIlasmPackageRuntimeId).microsoft.netcore.ildasm</MicrosoftNetCoreIldasmPackageName>
+
+    <!-- If ILAsmToolPath is specified, it will be used and no packages will be restored
+         Otherwise packages will be restored and ilasm and ildasm will be referenced from their packages.  -->
+    <_IlasmDir Condition="'$(ILAsmToolPath)' != ''">$([MSBuild]::NormalizeDirectory($(ILAsmToolPath)))</_IlasmDir>
+    <_IldasmDir Condition="'$(ILAsmToolPath)' != ''">$([MSBuild]::NormalizeDirectory($(ILAsmToolPath)))</_IldasmDir>
+    <CoreCompileDependsOn Condition="'$(ILAsmToolPath)' == ''">$(CoreCompileDependsOn);ResolveIlAsmToolPaths</CoreCompileDependsOn>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(ILAsmToolPath)' == ''">
+    <_IlasmPackageReference Include="$(MicrosoftNetCoreIlasmPackageName)" Version="$(MicrosoftNETCoreILAsmVersion)" />
+    <_IlasmPackageReference Include="$(MicrosoftNetCoreIldasmPackageName)" Version="$(MicrosoftNETCoreILAsmVersion)" />
+    <PackageReference Include="@(_IlasmPackageReference)" ExcludeAssets="native" PrivateAssets="all" IsImplicitlyDefined="true" />
+  </ItemGroup>
+
+  <Target Name="HideILFromCompile" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <IL Include="@(Compile)" Condition="'%(Extension)'=='.il'" />
+      <Compile Remove="@(Compile)" Condition="'%(Extension)'=='.il'" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="ProcessILAfterCompile" AfterTargets="Compile">
+    <CallTarget Targets="ResolveIlAsmToolPaths; InitializeIL; CoreDecompile; CoreCompileIL" />
+  </Target>
+
+  <Target Name="ResolveIlAsmToolPaths">
+    <ItemGroup>
+      <_IlasmPackageReference NativePath="$(NuGetPackageRoot)%(Identity)\%(Version)\runtimes\$(MicrosoftNetCoreIlasmPackageRuntimeId)\native" />
+      <_IlasmSourceFiles Include="%(_IlasmPackageReference.NativePath)\**\*" />
+    </ItemGroup>
+    <Error Condition="!Exists('%(_IlasmPackageReference.NativePath)')" Text="Package %(_IlasmPackageReference.Identity)\%(_IlasmPackageReference.Version) was not restored" />
+
+    <PropertyGroup>
+      <_IlasmDir Condition="'$(_IlasmDir)' == '' and '%(_IlasmPackageReference.Identity)' == '$(MicrosoftNetCoreIlasmPackageName)'">%(_IlasmPackageReference.NativePath)\</_IlasmDir>
+      <_IldasmDir Condition="'$(_IldasmDir)' == '' and '%(_IlasmPackageReference.Identity)' == '$(MicrosoftNetCoreIldasmPackageName)'">%(_IlasmPackageReference.NativePath)\</_IldasmDir>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="InitializeIL">
+    <PropertyGroup>
+      <ILFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).il', ' ')</ILFile>
+      <ILResourceFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).res', ' ')</ILResourceFile>
+      <ILFileBackup>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).il.bak', ' ')</ILFileBackup>
+      <AssemblyFile>@(IntermediateAssembly->'"%(FullPath)"', ' ')</AssemblyFile>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="CoreDecompile"
+          Inputs="@(IntermediateAssembly)"
+          Outputs="$(ILFile)"
+          Condition=" Exists ( @(IntermediateAssembly) ) ">
+    <PropertyGroup>
+      <ILDasm>$(_IldasmDir)ildasm /LINENUM $(AssemblyFile) /OUT="$(ILFile)"</ILDasm>
+    </PropertyGroup>
+    <!--<Message Text="$(ILDasm)" Importance="high"/>-->
+    <Exec Command="$(ILDasm)" ConsoleToMSBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ExitCode" PropertyName="_IldasmCommandExitCode" />
+    </Exec>
+    <Error Condition="'$(_IldasmCommandExitCode)' != '0'" Text="ILDasm failed" />
+    <Copy SourceFiles="$(ILFile)" DestinationFiles="$(ILFileBackup)" />
+    <ItemGroup>
+      <!--MSBuild maintains an item list named FileWrites that contains the files that need to be cleaned.
+      This list is persisted to a file inside the obj folder that is referred to as the "clean cache."
+      You can place additional values into the FileWrites item list so that they are removed when the project is cleaned up.-->
+      <FileWrites Include="$(ILFile)" />
+      <FileWrites Include="$(ILResourceFile)" />
+      <FileWrites Include="$(ILFileBackup)" />
+    </ItemGroup>
+    <PropertyGroup>
+      <ILSource>$([System.IO.File]::ReadAllText($(ILFile)))</ILSource>
+      <Replacement>// method ${method} forwardref removed for IL import</Replacement>
+      <Pattern>\.method [^{}]+ cil managed forwardref[^}]+} // end of method (?&lt;method&gt;[^ \r\t\n]+)</Pattern>
+      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>
+      <Pattern>\.method [^{}]+ cil managed[^\a]+"extern was not given a DllImport attribute"[^}]+} // end of method (?&lt;method&gt;[^ \r\t\n]+)</Pattern>
+      <ILSource>$([System.Text.RegularExpressions.Regex]::Replace($(ILSource), $(Pattern), $(Replacement)))</ILSource>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(ILFile)" Lines="$(ILSource)" Overwrite="true" />
+    <PropertyGroup>
+      <ILSource />
+    </PropertyGroup>
+    <Delete Files="@(IntermediateAssembly)" />
+  </Target>
+
+  <Target Name="CoreCompileIL"
+          Inputs="$(MSBuildAllProjects);
+                  @(Compile)"
+          Outputs="@(IntermediateAssembly)"
+          Returns=""
+          DependsOnTargets="$(CoreCompileDependsOn)">
+
+    <PropertyGroup>
+      <_OutputTypeArgument Condition="'$(OutputType)' == 'Library'">-DLL</_OutputTypeArgument>
+      <_OutputTypeArgument Condition="'$(OutputType)' == 'Exe'">-EXE</_OutputTypeArgument>
+
+      <_KeyFileArgument Condition="'$(KeyOriginatorFile)' != ''">-KEY="$(KeyOriginatorFile)"</_KeyFileArgument>
+
+      <_IlasmSwitches>-QUIET -NOLOGO</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(FoldIdenticalMethods)' == 'True'">$(_IlasmSwitches) -FOLD</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(SizeOfStackReserve)' != ''">$(_IlasmSwitches) -STACK=$(SizeOfStackReserve)</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(DebugType)' == 'Full'">$(_IlasmSwitches) -DEBUG</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(DebugType)' == 'Impl'">$(_IlasmSwitches) -DEBUG=IMPL</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(DebugType)' == 'PdbOnly'">$(_IlasmSwitches) -DEBUG=OPT</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(Optimize)' == 'True'">$(_IlasmSwitches) -OPTIMIZE</_IlasmSwitches>
+
+      <!-- Not working right now for some reason -->
+      <!--<_IlasmSwitches Condition="'$(Platform)' == 'x86'">$(_IlasmSwitches)</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(Platform)' == 'AnyCPU'">$(_IlasmSwitches)</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(Platform)' == 'Itanium'">$(_IlasmSwitches)  -PE64 -ITANIUM</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(Platform)' == 'x64'">$(_IlasmSwitches) -x64</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(Platform)' == 'ARM' or '$(Platform)' == 'ARM32'">$(_IlasmSwitches) -ARM</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(Platform)' == 'ARM64'">$(_IlasmSwitches) -ARM64</_IlasmSwitches>-->
+      
+      <!--<_IlasmSwitches Condition="'$(IlasmResourceFile)' != ''">$(_IlasmSwitches) -RESOURCES=$(IlasmResourceFile)</_IlasmSwitches>-->
+
+      <ILAsm>$(_IlasmDir)ilasm $(_IlasmSwitches) $(_OutputTypeArgument) $(IlasmFlags) -OUTPUT=@(IntermediateAssembly->'"%(FullPath)"', ' ') @(IL->'"%(FullPath)"', ' ')</ILAsm>
+    </PropertyGroup>
+    
+    <!--<Message Text="ilasm flags: $(IlasmFlags)" Importance="high"/>
+    <Message Text="platform: $(Platform)" Importance="high"/>
+    <Message Text="ilasm: $(ILAsm)" Importance="high"/>-->
+      
+    <PropertyGroup Condition=" Exists ( '$(ILFile)' ) ">
+      <ILAsm>$(ILAsm) "$(ILFile)"</ILAsm>
+    </PropertyGroup>
+    <Exec Command="$(ILAsm)">
+      <Output TaskParameter="ExitCode" PropertyName="_ILAsmExitCode" />
+    </Exec>
+
+    <Error Condition="'$(_ILAsmExitCode)' != '0'" Text="ILAsm failed" />
+
+    <ItemGroup>
+      <FileWrites Include="@(IntermediateAssembly->'%(RootDir)%(Directory)DesignTimeResolveAssemblyReferencesInput.cache', ' ')" />
+    </ItemGroup>
+    <Touch Files="$(ILFile)" />
+  </Target>
+
+</Project>
