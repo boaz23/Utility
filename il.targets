@@ -58,9 +58,10 @@ Slightly modified.
 
   <Target Name="InitializeIL">
     <PropertyGroup>
-      <ILFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).il', ' ')</ILFile>
-      <ILResourceFile>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).res', ' ')</ILResourceFile>
-      <ILFileBackup>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename).il.bak', ' ')</ILFileBackup>
+      <AssemblyFilePathNoExt>@(IntermediateAssembly->'%(RootDir)%(Directory)%(Filename)', ' ')</AssemblyFilePathNoExt>
+      <ILFile>$(AssemblyFilePathNoExt).il</ILFile>
+      <ILResourceFile>$(AssemblyFilePathNoExt).res</ILResourceFile>
+      <ILFileBackup>$(AssemblyFilePathNoExt).il.bak</ILFileBackup>
       <AssemblyFile>@(IntermediateAssembly->'"%(FullPath)"', ' ')</AssemblyFile>
     </PropertyGroup>
   </Target>
@@ -70,7 +71,7 @@ Slightly modified.
           Outputs="$(ILFile)"
           Condition=" Exists ( @(IntermediateAssembly) ) ">
     <PropertyGroup>
-      <ILDasm>$(_IldasmDir)ildasm /LINENUM $(AssemblyFile) /OUT="$(ILFile)"</ILDasm>
+      <ILDasm>$(_IldasmDir)ildasm $(AssemblyFile) /LINENUM /OUT="$(ILFile)"</ILDasm>
     </PropertyGroup>
     <!--<Message Text="$(ILDasm)" Importance="high"/>-->
     <Exec Command="$(ILDasm)" ConsoleToMSBuild="true" StandardOutputImportance="Low">
@@ -107,7 +108,6 @@ Slightly modified.
           Outputs="@(IntermediateAssembly)"
           Returns=""
           DependsOnTargets="$(CoreCompileDependsOn)">
-
     <PropertyGroup>
       <_OutputTypeArgument Condition="'$(OutputType)' == 'Library'">-DLL</_OutputTypeArgument>
       <_OutputTypeArgument Condition="'$(OutputType)' == 'Exe'">-EXE</_OutputTypeArgument>
@@ -117,10 +117,14 @@ Slightly modified.
       <_IlasmSwitches>-QUIET -NOLOGO</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(FoldIdenticalMethods)' == 'True'">$(_IlasmSwitches) -FOLD</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(SizeOfStackReserve)' != ''">$(_IlasmSwitches) -STACK=$(SizeOfStackReserve)</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(DebugType)' == 'Full'">$(_IlasmSwitches) -DEBUG</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(DebugType)' == 'Impl'">$(_IlasmSwitches) -DEBUG=IMPL</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(DebugType)' == 'PdbOnly'">$(_IlasmSwitches) -DEBUG=OPT</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(FileAlignment)' != ''">$(_IlasmSwitches) -ALIGNMENT=$(FileAlignment)</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(BaseAddress)' != ''">$(_IlasmSwitches) -BASE=$(BaseAddress)</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(Optimize)' == 'True'">$(_IlasmSwitches) -OPTIMIZE</_IlasmSwitches>
+
+      <!--<_IlasmSwitches Condition="'$(DebugType)' == 'Full'">$(_IlasmSwitches) -DEBUG</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(DebugType)' == 'Impl'">$(_IlasmSwitches) -DEBUG=IMPL</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(DebugType)' == 'Portable'">$(_IlasmSwitches) -DEBUG=OPT</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(DebugType)' == 'PdbOnly'">$(_IlasmSwitches) -PDB</_IlasmSwitches>-->
 
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'x86'">$(_IlasmSwitches)</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'AnyCPU'">$(_IlasmSwitches)</_IlasmSwitches>
@@ -133,7 +137,6 @@ Slightly modified.
 
       <ILAsm>$(_IlasmDir)ilasm $(_IlasmSwitches) $(_OutputTypeArgument) $(IlasmFlags) -OUTPUT=@(IntermediateAssembly->'"%(FullPath)"', ' ') @(IL->'"%(FullPath)"', ' ')</ILAsm>
     </PropertyGroup>
-
     <!--<Message Text="ilasm flags: $(IlasmFlags)" Importance="high"/>
     <Message Text="platform target: $(PlatformTarget)" Importance="high"/>
     <Message Text="ilasm: $(ILAsm)" Importance="high"/>-->
