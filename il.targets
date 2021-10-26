@@ -114,36 +114,35 @@ Slightly modified.
 
       <_KeyFileArgument Condition="'$(KeyOriginatorFile)' != ''">-KEY="$(KeyOriginatorFile)"</_KeyFileArgument>
 
-      <_IlasmSwitches>-QUIET -NOLOGO</_IlasmSwitches>
+      <_IlasmSwitches>-QUIET -NOLOGO -DEBUG -PDBFMT=PORTABLE</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(FoldIdenticalMethods)' == 'True'">$(_IlasmSwitches) -FOLD</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(SizeOfStackReserve)' != ''">$(_IlasmSwitches) -STACK=$(SizeOfStackReserve)</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(FileAlignment)' != ''">$(_IlasmSwitches) -ALIGNMENT=$(FileAlignment)</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(BaseAddress)' != ''">$(_IlasmSwitches) -BASE=$(BaseAddress)</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(Optimize)' == 'True'">$(_IlasmSwitches) -OPTIMIZE</_IlasmSwitches>
 
-      <!--<_IlasmSwitches Condition="'$(DebugType)' == 'Full'">$(_IlasmSwitches) -DEBUG</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(DebugType)' == 'Impl'">$(_IlasmSwitches) -DEBUG=IMPL</_IlasmSwitches>
+      <!--<_IlasmSwitches Condition="'$(DebugType)' == 'Full'">$(_IlasmSwitches) -DEBUG</_IlasmSwitches>-->
+      <!--<_IlasmSwitches Condition="'$(DebugType)' == 'Impl'">$(_IlasmSwitches) -DEBUG=IMPL</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(DebugType)' == 'Portable'">$(_IlasmSwitches) -DEBUG=OPT</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(DebugType)' == 'PdbOnly'">$(_IlasmSwitches) -PDB</_IlasmSwitches>-->
 
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'x86'">$(_IlasmSwitches)</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'AnyCPU'">$(_IlasmSwitches)</_IlasmSwitches>
-      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'Itanium'">$(_IlasmSwitches)  -PE64 -ITANIUM</_IlasmSwitches>
+      <_IlasmSwitches Condition="'$(PlatformTarget)' == 'Itanium'">$(_IlasmSwitches) -PE64 -ITANIUM</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'x64'">$(_IlasmSwitches) -x64</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'ARM' or '$(Platform)' == 'ARM32'">$(_IlasmSwitches) -ARM</_IlasmSwitches>
       <_IlasmSwitches Condition="'$(PlatformTarget)' == 'ARM64'">$(_IlasmSwitches) -ARM64</_IlasmSwitches>
       
       <!--<_IlasmSwitches Condition="'$(IlasmResourceFile)' != ''">$(_IlasmSwitches) -RESOURCES=$(IlasmResourceFile)</_IlasmSwitches>-->
 
-      <ILAsm>$(_IlasmDir)ilasm $(_IlasmSwitches) $(_OutputTypeArgument) $(IlasmFlags) -OUTPUT=@(IntermediateAssembly->'"%(FullPath)"', ' ') @(IL->'"%(FullPath)"', ' ')</ILAsm>
+      <ILAsm>$(_IlasmDir)ilasm $(_IlasmSwitches) $(_OutputTypeArgument) $(IlasmFlags) -OUTPUT=@(IntermediateAssembly->'"%(FullPath)"', ' ')</ILAsm>
+      <ILAsm Condition="Exists('$(ILFile)')">$(ILAsm) "$(ILFile)"</ILAsm>
+      <ILAsm>$(ILAsm) @(IL->'"%(FullPath)"', ' ')</ILAsm>
     </PropertyGroup>
     <!--<Message Text="ilasm flags: $(IlasmFlags)" Importance="high"/>
     <Message Text="platform target: $(PlatformTarget)" Importance="high"/>
     <Message Text="ilasm: $(ILAsm)" Importance="high"/>-->
-      
-    <PropertyGroup Condition=" Exists ( '$(ILFile)' ) ">
-      <ILAsm>$(ILAsm) "$(ILFile)"</ILAsm>
-    </PropertyGroup>
+
     <Exec Command="$(ILAsm)">
       <Output TaskParameter="ExitCode" PropertyName="_ILAsmExitCode" />
     </Exec>
