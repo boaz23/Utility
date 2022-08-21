@@ -2,6 +2,9 @@
 
 using Utility.Properties;
 
+using static Utility.ObjectsUnsafe;
+using static Utility.NumbersOperators;
+
 namespace Utility
 {
     public static class Enums
@@ -10,20 +13,20 @@ namespace Utility
 
         public static bool HasAnyOfUsedBits<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
-            return value.HasAnyOfFlags(Enums<TEnum>.UsedBits);
+            return HasAnyOfFlags(value, Enums<TEnum>.UsedBits);
         }
         public static bool HasAllOfUsedBits<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
-            return value.HasAllOfFlags(Enums<TEnum>.UsedBits);
+            return HasAllOfFlags(value, Enums<TEnum>.UsedBits);
         }
 
         public static bool HasAnyOfUnusedBits<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
-            return value.HasAnyOfFlags(Enums<TEnum>.UnusedBits);
+            return HasAnyOfFlags(value, Enums<TEnum>.UnusedBits);
         }
         public static bool HasAllOfUnusedBits<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
-            return value.HasAllOfFlags(Enums<TEnum>.UnusedBits);
+            return HasAllOfFlags(value, Enums<TEnum>.UnusedBits);
         }
 
         public static TypeCode GetTypeCode<TEnum>(this TEnum value) where TEnum : struct, Enum
@@ -51,12 +54,12 @@ namespace Utility
                 {
                     TEnum value = values[i];
 
-                    usedBits = usedBits.Or(value);
-                    if (value.IsGreaterThan(maxDefinedValue))
+                    usedBits = Or(usedBits, value);
+                    if (IsGreaterThan(value, maxDefinedValue))
                     {
                         maxDefinedValue = value;
                     }
-                    if (value.IsLessThan(minDefinedValue))
+                    if (IsLessThan(value, minDefinedValue))
                     {
                         minDefinedValue = value;
                     }
@@ -74,7 +77,7 @@ namespace Utility
             IsFlags = type.IsDefined(typeof(FlagsAttribute), false);
 
             UsedBits = usedBits;
-            UnusedBits = usedBits.Not();
+            UnusedBits = Not(usedBits);
 
             _names = type.GetEnumNames();
             _values = values;
@@ -99,7 +102,7 @@ namespace Utility
 
         public static bool IsValueInRange(TEnum value, TEnum min, TEnum max)
         {
-            return value.IsGreaterThanOrEqualTo(min) && value.IsLessThanOrEqualTo(max);
+            return IsGreaterThanOrEqualTo(value, min) && IsLessThanOrEqualTo(value, max);
         }
         public static bool IsValueInDefinedMinMaxRange(TEnum value)
         {
@@ -111,14 +114,14 @@ namespace Utility
             return IsValueInRange(value, (TEnum)MinDefinedValue, (TEnum)MaxDefinedValue);
         }
 
-        public static TEnum ToEnum(sbyte value) => value.UnsafeCast<sbyte, TEnum>();
-        public static TEnum ToEnum(byte value) => value.UnsafeCast<byte, TEnum>();
-        public static TEnum ToEnum(short value) => value.UnsafeCast<short, TEnum>();
-        public static TEnum ToEnum(ushort value) => value.UnsafeCast<ushort, TEnum>();
-        public static TEnum ToEnum(int value) => value.UnsafeCast<int, TEnum>();
-        public static TEnum ToEnum(uint value) => value.UnsafeCast<uint, TEnum>();
-        public static TEnum ToEnum(long value) => value.UnsafeCast<long, TEnum>();
-        public static TEnum ToEnum(ulong value) => value.UnsafeCast<ulong, TEnum>();
+        public static TEnum ToEnum(sbyte value) => UnsafeCast<sbyte, TEnum>(value);
+        public static TEnum ToEnum(byte value) => UnsafeCast<byte, TEnum>(value);
+        public static TEnum ToEnum(short value) => UnsafeCast<short, TEnum>(value);
+        public static TEnum ToEnum(ushort value) => UnsafeCast<ushort, TEnum>(value);
+        public static TEnum ToEnum(int value) => UnsafeCast<int, TEnum>(value);
+        public static TEnum ToEnum(uint value) => UnsafeCast<uint, TEnum>(value);
+        public static TEnum ToEnum(long value) => UnsafeCast<long, TEnum>(value);
+        public static TEnum ToEnum(ulong value) => UnsafeCast<ulong, TEnum>(value);
         public static TEnum ToEnum(object value)
         {
             if (value == null)
@@ -126,7 +129,7 @@ namespace Utility
                 throw new ArgumentNullException(nameof(value));
             }
 
-            return value.UnsafeUnbox<object, TEnum>();
+            return UnsafeUnbox<object, TEnum>(value);
         }
 
         public static object ToRawValue(TEnum value)
@@ -134,28 +137,28 @@ namespace Utility
             switch (Numbers<TEnum>.TypeCode)
             {
                 case TypeCode.Int32:
-                    return value.UnsafeCast<TEnum, int>();
+                    return UnsafeCast<TEnum, int>(value);
                 case TypeCode.SByte:
-                    return value.UnsafeCast<TEnum, sbyte>();
+                    return UnsafeCast<TEnum, sbyte>(value);
                 case TypeCode.Int16:
-                    return value.UnsafeCast<TEnum, short>();
+                    return UnsafeCast<TEnum, short>(value);
                 case TypeCode.Int64:
-                    return value.UnsafeCast<TEnum, long>();
+                    return UnsafeCast<TEnum, long>(value);
                 case TypeCode.UInt32:
-                    return value.UnsafeCast<TEnum, uint>();
+                    return UnsafeCast<TEnum, uint>(value);
                 case TypeCode.Byte:
-                    return value.UnsafeCast<TEnum, byte>();
+                    return UnsafeCast<TEnum, byte>(value);
                 case TypeCode.UInt16:
-                    return value.UnsafeCast<TEnum, ushort>();
+                    return UnsafeCast<TEnum, ushort>(value);
                 case TypeCode.UInt64:
-                    return value.UnsafeCast<TEnum, ulong>();
+                    return UnsafeCast<TEnum, ulong>(value);
                 default:
                     return value;
             }
         }
         public static ulong ToUInt64(TEnum value)
         {
-            return value.UnsafeCast<TEnum, ulong>();
+            return UnsafeCast<TEnum, ulong>(value);
         }
     }
 }

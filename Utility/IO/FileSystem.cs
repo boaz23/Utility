@@ -2,6 +2,8 @@
 using System.IO;
 using Utility.Interop.Native;
 
+using static Utility.NumbersOperators;
+
 namespace Utility.IO
 {
     public static class FileSystem
@@ -47,7 +49,7 @@ namespace Utility.IO
                 throw new ArgumentNullException(nameof(fileSystemInfo));
             }
 
-            return fileSystemInfo.Attributes.HasAnyOfFlags(FileAttributes.Directory);
+            return HasAnyOfFlags(fileSystemInfo.Attributes, FileAttributes.Directory);
         }
 
         public static bool IsDirectorySeparator(char c)

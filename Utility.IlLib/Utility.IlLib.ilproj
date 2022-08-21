@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.IL">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <!--
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    -->
+    <_HasReferenceToSystemRuntime>true</_HasReferenceToSystemRuntime>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Content Include="**\*.il" />
+  </ItemGroup>
+</Project>

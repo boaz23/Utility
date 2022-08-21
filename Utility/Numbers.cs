@@ -5,6 +5,10 @@ using System.Security;
 
 using Utility.Properties;
 
+using static Utility.ObjectsUnsafe;
+using static Utility.Objects;
+using static Utility.NumbersOperators;
+
 namespace Utility
 {
     public static class Numbers
@@ -28,94 +32,10 @@ namespace Utility
             };
         }
 
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T And<T>(this T value, T flags) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Or<T>(this T value, T flags) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Not<T>(this T value) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Xor<T>(this T value, T flags) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T LeftShift<T>(this T value, int amount) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T RightShift<T>(this T value, int amount) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T RemoveFlags<T>(this T value, T flags) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool HasAllOfFlags<T>(this T value, T flags) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool HasAnyOfFlags<T>(this T value, T flags) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool IsEmpty<T>(this T value) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern int CompareTo<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool Equals<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool IsLessThan<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool IsLessThanOrEqualTo<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool IsGreaterThan<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern bool IsGreaterThanOrEqualTo<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Add<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Subtract<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Multiply<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Divide<T>(this T value, T number) where T : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern T Modulus<T>(this T value, T number) where T : struct;
-
         internal static IIntegerNumberInfo GetIntegerNumberInfoOrThrow<T>()
         {
             IIntegerNumberInfo integerNumberInfo;
-            if (!IntegerTypeInfosByTypeCode.TryGetValue(typeof(T).GetTypeCode(), out integerNumberInfo))
+            if (!IntegerTypeInfosByTypeCode.TryGetValue(GetTypeCode<T>(), out integerNumberInfo))
             {
                 throw new ArgumentException(Resources.Argument_InvalidIntegerType);
             }
@@ -129,7 +49,7 @@ namespace Utility
         }
         public static bool IsIntegerType(Type type)
         {
-            return IsIntegerType(type.GetTypeCode());
+            return IsIntegerType(GetTypeCode(type));
         }
         public static bool IsIntegerType(TypeCode typeCode)
         {
@@ -142,7 +62,7 @@ namespace Utility
         }
         public static bool IsSigned(Type type)
         {
-            return IsSigned(type.GetTypeCode());
+            return IsSigned(GetTypeCode(type));
         }
         public static bool IsSigned(TypeCode typeCode)
         {
@@ -157,7 +77,7 @@ namespace Utility
 
         public static int BitCount<T>(this T value) where T : struct
         {
-            return BitCount(value.UnsafeCast<T, long>());
+            return BitCount(UnsafeCast<T, long>(value));
         }
         private static int BitCount(long value)
         {
@@ -178,17 +98,17 @@ namespace Utility
             IIntegerNumberInfo integerNumberInfo = Numbers.GetIntegerNumberInfoOrThrow<T>();
             bool isSigned = integerNumberInfo.IsSigned;
 
-            int bytesSize = Objects.SizeOf<T>();
+            int bytesSize = SizeOf<T>();
             int bitsCount = bytesSize * Numbers.BITS_IN_BYTE;
 
             T noBits = default;
-            T allBits = noBits.Not();
-            T mostSignificantBit = (1L << (bitsCount - 1)).UnsafeCast<long, T>();
+            T allBits = Not(noBits);
+            T mostSignificantBit = UnsafeCast<long, T>(1L << (bitsCount - 1));
             T maxValue, minValue;
             if (isSigned)
             {
                 minValue = mostSignificantBit;
-                maxValue = allBits.RemoveFlags(mostSignificantBit);
+                maxValue = RemoveFlags(allBits, mostSignificantBit);
             }
             else
             {

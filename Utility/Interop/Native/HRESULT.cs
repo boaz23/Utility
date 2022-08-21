@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-using static Utility.Numbers;
+using static Utility.NumbersOperators;
 
 namespace Utility.Interop.Native
 {
     public struct HRESULT
     {
-        public static HRESULT S_OK = new HRESULT(0);
-        public static HRESULT S_FALSE = new HRESULT(1);
+        public static readonly HRESULT S_OK = new(0);
+        public static readonly HRESULT S_FALSE = new(1);
 
         public const int WIN32_TO_HRESULT = (NativeMethods.FACILITY_WIN32 << 16) | NativeMethods.NEGATIVE_MASK;
 
@@ -22,12 +22,9 @@ namespace Utility.Interop.Native
 
         public static HRESULT FromWin32ErrorCode(int errorCode)
         {
-            if (errorCode.HasAnyOfFlags(unchecked((int)0xFFFF0000)) || errorCode < 1)
-            {
-                return errorCode;
-            }
-
-            return (errorCode & 0x0000FFFF) | WIN32_TO_HRESULT;
+            return HasAnyOfFlags(errorCode, unchecked((int)0xFFFF0000)) || errorCode < 1
+                ? (HRESULT)errorCode
+                : (HRESULT)((errorCode & 0x0000FFFF) | WIN32_TO_HRESULT);
         }
 
         public Exception GetException()
@@ -57,9 +54,9 @@ namespace Utility.Interop.Native
 
         public override bool Equals(object obj)
         {
-            if (obj is HRESULT)
+            if (obj is HRESULT hRESULT)
             {
-                return value == ((HRESULT)obj).value;
+                return value == hRESULT.value;
             }
 
             try
@@ -101,8 +98,8 @@ namespace Utility.Interop.Native
         public static bool operator ==(HRESULT a, HRESULT b) => a.value == b.value;
         public static bool operator !=(HRESULT a, HRESULT b) => a.value != b.value;
 
-        public static implicit operator HRESULT(uint hResult) => new HRESULT(unchecked((int)hResult));
-        public static implicit operator HRESULT(int hResult) => new HRESULT(hResult);
+        public static implicit operator HRESULT(uint hResult) => new(unchecked((int)hResult));
+        public static implicit operator HRESULT(int hResult) => new(hResult);
         public static implicit operator uint(HRESULT hResult) => unchecked((uint)hResult.value);
         public static implicit operator int(HRESULT hResult) => hResult.value;
     }

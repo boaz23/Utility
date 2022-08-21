@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\il.targets" />
-
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -14,14 +12,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  
+
   <ItemGroup>
-    <None Remove="Number.il" />
-    <None Remove="Objects.il" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Compile Include="Number.il" />
-    <Compile Include="Objects.il" />
+    <ProjectReference Include="..\Utility.IlLib\Utility.IlLib.ilproj" />
   </ItemGroup>
 </Project>

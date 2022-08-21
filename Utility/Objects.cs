@@ -4,22 +4,11 @@ using System.Security;
 
 namespace Utility
 {
-    public static class Objects
+    public abstract class Objects : ObjectsUnsafe
     {
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern TResult UnsafeCast<T, TResult>(this T obj);
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern TResult UnsafeUnbox<T, TResult>(this T obj) where T : class where TResult : struct;
-
-        [SecuritySafeCritical]
-        [MethodImpl(MethodImplOptions.ForwardRef | MethodImplOptions.AggressiveInlining)]
-        public static extern int SizeOf<T>() where T : struct;
-
-        public static TypeCode GetTypeCode<T>(this T @object) => Convert.GetTypeCode(@object);
-        public static TypeCode GetTypeCode(this Type type) => Type.GetTypeCode(type);
+        public static TypeCode GetTypeCode<T>(T @object) => Convert.GetTypeCode(@object);
+        public static TypeCode GetTypeCode(Type type) => Type.GetTypeCode(type);
+        public static TypeCode GetTypeCode<T>() => GetTypeCode(typeof(T));
 
         public static bool Compare(object x, object y, out int compareResult)
         {
